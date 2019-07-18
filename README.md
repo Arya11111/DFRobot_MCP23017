@@ -3,7 +3,7 @@
 
 这里需要显示拍照图片，可以一张图片，可以多张图片（不要用SVG图）
 
-![正反面svg效果图](https://github.com/ouki-wang/DFRobot_Sensor/raw/master/resources/images/SEN0245svg1.png)
+![正反面svg效果图](https://github.com/Arya11111/DFRobot_MCP23017/blob/master/resources/images/SEN0245svg1.png)
 
 
 ## 产品链接（链接到英文商城）
@@ -20,12 +20,12 @@
 
 ## Summary
 
-1.设置引脚输入、输出、上拉输入模式；
-2.读取引脚高低电平状态；
-3.设置引脚输出高低电平；
-4.中断方式：高电平中断、低电平中断、状态改变中断
-5.INTA和INTB信号引脚中断，当端口DA或端口DB的某些引脚发生中断时，相应的INTA和INTB将产生高电平信号；
-6.软中断，将某个引脚设置为中断模式，当中断发生时，可通过软件读取中断是否发生。
+1.设置引脚输入、输出、上拉输入模式；<br>
+2.读取引脚高低电平状态；<br>
+3.设置引脚输出高低电平；<br>
+4.中断方式：高电平中断、低电平中断、状态改变中断.<br>
+5.INTA和INTB信号引脚中断，当端口DA或端口DB的某些引脚发生中断时，相应的INTA和INTB将产生高电平信号；<br>
+6.软中断，将某个引脚设置为中断模式，当中断发生时，可通过软件读取中断是否发生。<br>
 
 ## Installation
 
