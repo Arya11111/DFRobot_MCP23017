@@ -1,0 +1,52 @@
+#######################################
+# Syntax Map For DFRobot_MCP23017
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+DFRobot_MCP23017	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+pinMode	KEYWORD2
+digitalWrite	KEYWORD2
+digitalRead	KEYWORD2
+setInterruptPins	KEYWORD2
+clearInterrupt	KEYWORD2
+readInterruptFlag	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+ePin_t	LITERAL1
+DA0	LITERAL1
+DA1	LITERAL1
+DA2	LITERAL1
+DA3	LITERAL1
+DA4	LITERAL1
+DA5	LITERAL1
+DA6	LITERAL1
+DA7	LITERAL1
+DB0	LITERAL1
+DB1	LITERAL1
+DB2	LITERAL1
+DB3	LITERAL1
+DB4	LITERAL1
+DB5	LITERAL1
+DB6	LITERAL1
+DB7	LITERAL1
+eInterruptMode_t	LITERAL1
+LowMode	LITERAL1
+HighMode	LITERAL1
+ChangeMode	LITERAL1
+
