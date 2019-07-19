@@ -1,9 +1,9 @@
 #include <DFRobot_MCP23017.h>
 
-DFRobot_MCP23017::DFRobot_MCP23017(TwoWire &pWire = Wire, uint8_t addr_ = 0x27)
+DFRobot_MCP23017::DFRobot_MCP23017(TwoWire &wire, uint8_t addr)
 {
-  _addr = addr_;
-  _pWire = &pWire;
+  _addr = addr;
+  _pWire = &wire;
 }
 
 DFRobot_MCP23017::~DFRobot_MCP23017(){
@@ -11,31 +11,22 @@ DFRobot_MCP23017::~DFRobot_MCP23017(){
 }
 
 int DFRobot_MCP23017::begin(void){
+  DBG("");
   _pWire->begin();
-   uint8_t value = 0x00;
+  DBG("");
+  if(i2cdetect(_addr) != 0){
+      DBG("I2C ADDR ERROR!");
+      return ERR_ADDR_BUS;
+  }
+  uint8_t value = 0x00;
   uint8_t val = 0xff;
   writeReg(REG_MCP23017_IODIRA, &val, 1);
   writeReg(REG_MCP23017_IODIRB, &val, 1);
-  for(uint8_t ad = 0x02; ad < 0x16; ad ++){
-      writeReg(ad, &value, 1);
-      // readReg(ad, &value, 1);
-      // Serial.print("0x");
-      // if(ad < 0x10){
-          // Serial.print("0");
-      // }
-      // Serial.print(ad, HEX);
-      // Serial.print(": 0x");
-      // if(value < 0x10){
-          // Serial.print("0");
-      // }
-      // Serial.print(value, HEX);
-      // Serial.println(" ");
-  }
   return 0;
 }
 
-int DFRobot_MCP23017::pinMode(ePin_t pin_, uint8_t mode){
-  uint8_t pin = (uint8_t)pin_;
+int DFRobot_MCP23017::pinMode(ePin_t p, eDirMode_t mode){
+  uint8_t pin = (uint8_t)p;
   if(pin > 15){
       DBG("pin ERROR!");
       return ERR_PIN;
@@ -43,19 +34,19 @@ int DFRobot_MCP23017::pinMode(ePin_t pin_, uint8_t mode){
   DBG(pin);
   DBG(mode);
   switch(mode){
-      case 0: 
+      case InputMode: 
              if(pin < 8){
                  setInput(REG_MCP23017_IODIRA, pin);
              }else{
-                 setInput(REG_MCP23017_IODIRA, pin - 8);
+                 setInput(REG_MCP23017_IODIRB, pin - 8);
              }
              DBG(0);
              break;
-      case 1: 
+      case OutPutMode: 
              if(pin < 8){
                  setOutput(REG_MCP23017_IODIRA, pin);
              }else{
-                 setOutput(REG_MCP23017_IODIRA, pin - 8);
+                 setOutput(REG_MCP23017_IODIRB, pin - 8);
              }
              DBG(1);
              break;
@@ -64,7 +55,7 @@ int DFRobot_MCP23017::pinMode(ePin_t pin_, uint8_t mode){
                  setInput(REG_MCP23017_IODIRA, pin);
                  setPullUp(REG_MCP23017_GPPUA, pin);
              }else{
-                 setInput(REG_MCP23017_IODIRA, pin - 8);
+                 setInput(REG_MCP23017_IODIRB, pin - 8);
                  setPullUp(REG_MCP23017_GPPUB, pin - 8);
              }
              DBG(2);
@@ -73,9 +64,10 @@ int DFRobot_MCP23017::pinMode(ePin_t pin_, uint8_t mode){
   return ERR_OK;
 }
 
-int DFRobot_MCP23017::digitalWrite(ePin_t pin_, uint8_t level){
-  uint8_t pin = (uint8_t)pin_;
+int DFRobot_MCP23017::digitalWrite(ePin_t p, uint8_t level){
+  uint8_t pin = (uint8_t)p;
   uint8_t value = 0;
+  DBG(pin);
   if(pin < 8){
       if(readReg(REG_MCP23017_OLATA, &value, 1) != 1){
           DBG("I2C READ ERROR!");
@@ -90,14 +82,16 @@ int DFRobot_MCP23017::digitalWrite(ePin_t pin_, uint8_t level){
           DBG("I2C READ ERROR!");
           return ERR_DATA_READ;
       }
+      DBG(value, HEX);
       value = updateBit(value, (pin - 8), level);
+      DBG(value, HEX);
       writeReg(REG_MCP23017_GPIOB, &value, 1);
   }
   return ERR_OK;
 }
 
-int DFRobot_MCP23017::digitalRead(ePin_t pin_){
-  uint8_t pin = (uint8_t)pin_;
+int DFRobot_MCP23017::digitalRead(ePin_t p){
+  uint8_t pin = (uint8_t)p;
   uint8_t value = 0;
   if(pin < 8){
       readReg(REG_MCP23017_GPIOA, &value, 1);
@@ -108,9 +102,8 @@ int DFRobot_MCP23017::digitalRead(ePin_t pin_){
   return (value >> pin)&0x01;
 }
 
-void DFRobot_MCP23017::setInterruptPins(ePin_t pin_, eInterruptMode_t mode_){
-  uint8_t pin = (uint8_t)pin_;
-  uint8_t mode = (uint8_t)mode_;
+void DFRobot_MCP23017::setInterruptPins(ePin_t p, eInterruptMode_t mode){
+  uint8_t pin = (uint8_t)p;
   if(pin > 15){
       DBG("PIN ERROR!");
       return ;
@@ -147,10 +140,11 @@ int DFRobot_MCP23017::clearInterrupt(){
   return ERR_OK;
 }
 
-int DFRobot_MCP23017::readInterruptFlag(ePin_t pin_){
-  uint8_t pin = (uint8_t)pin_;
+int DFRobot_MCP23017::readInterruptFlag(ePin_t p){
+  uint8_t pin = (uint8_t)p;
   uint8_t regAddr = 0;
   uint8_t value = 0;
+  DBG(pin);
   if(pin > 15){
       DBG("I2C READ ERROR!");
       return ERR_PIN;
@@ -169,6 +163,15 @@ int DFRobot_MCP23017::readInterruptFlag(ePin_t pin_){
       return 1;
   }
   return 0;
+}
+
+int DFRobot_MCP23017::i2cdetect(uint8_t addr){
+  _pWire->beginTransmission(addr);
+  if(_pWire->endTransmission() == 0){
+      DBG("Addr ok!");
+      return  ERR_OK;
+  }
+  return ERR_ADDR_BUS;
 }
 
 int DFRobot_MCP23017::setInput(uint8_t reg, uint8_t index){
@@ -319,6 +322,7 @@ int DFRobot_MCP23017::setHighMode(uint8_t index){
           return ERR_DATA_READ;
       }
       value = updateBit(value, index, 1);
+      DBG(value,HEX);
       writeReg(REG_MCP23017_GPINTENA, &value, 1);
   }else{
       index -= 8;
@@ -335,21 +339,25 @@ int DFRobot_MCP23017::setHighMode(uint8_t index){
           DBG("I2C READ ERROR!");
           return ERR_DATA_READ;
       }
+      DBG(value,HEX);
       value = updateBit(value, index, 0);
+      DBG(value,HEX);
       writeReg(REG_MCP23017_DEFVALB, &value, 1);
       if(readReg(REG_MCP23017_GPINTENB, &value, 1) != 1){
           DBG("I2C READ ERROR!");
           return ERR_DATA_READ;
       }
+      DBG(value,HEX);
       value = updateBit(value, index, 1);
       writeReg(REG_MCP23017_GPINTENB, &value, 1);
+      DBG(value,HEX);
   }
   return ERR_OK;
 }
 
-uint8_t DFRobot_MCP23017::updateBit(uint8_t val, uint8_t pin, uint8_t level_){
+uint8_t DFRobot_MCP23017::updateBit(uint8_t val, uint8_t pin, uint8_t level){
   uint8_t value = val;
-  if(level_){//置1
+  if(level){//置1
       value |= (1 << pin);
   }else{//置0  1左移pin位按位取反
       value &= (~(1 << pin));
@@ -381,7 +389,7 @@ void DFRobot_MCP23017::interruptConfig(){
   writeReg(REG_MCP23017_IOCONA, &value, 1);
 }
 
-void DFRobot_MCP23017::writeReg(uint8_t reg, void* pBuf, size_t size){
+void DFRobot_MCP23017::writeReg(uint8_t reg, const void* pBuf, size_t size){
   if(pBuf == NULL){
       DBG("pBuf ERROR!! : null pointer");
   }

@@ -49,4 +49,8 @@ eInterruptMode_t	LITERAL1
 LowMode	LITERAL1
 HighMode	LITERAL1
 ChangeMode	LITERAL1
+eDirMode_t	LITERAL1
+InputMode	LITERAL1
+OutPutMode	LITERAL1
+PullUpMode	LITERAL1
 

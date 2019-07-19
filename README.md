@@ -87,6 +87,8 @@ MCU                | Work Well    | Work Wrong   | Untested    | Remarks
 Arduino uno        |      √       |              |             | 
 Mega2560        |      √       |              |             | 
 Leonardo        |      √       |              |             | 
+mPython         |      √       |              |             | 
+Microbit        |      √       |              |             | 
 
 ## History
 
