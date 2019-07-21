@@ -2,9 +2,11 @@
  * @file DFRobot_MCP23017.h
  * @brief 定义 DFRobot_MCP23017 类的基础结构
  * @n 这是一个数字I/O扩展板，IIC地址可改变,可以通过IIC口来控制它，它有下面这些功能
- * @n 读取数字IO口的高低电平
- * @n 设置数字IO口的高低电平
- *
+ * @n 16-bit input/output port expander with interrupt output
+ * @n Cascadable for up to 8 devices on one bus
+ * @n 25mA sink/source capability per I/O
+ * @n Supports 100kHz, 400kHz and 1.7MHz I2C™Compatible compatible modes
+
  * @copyright   Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @licence     The MIT License (MIT)
  * @author [Arya]
@@ -24,7 +26,7 @@
 #include <Wire.h>
 
 //定义调试宏，若想打开调试宏可将0改为1，关闭可将1改为0
-#if 0
+#if 1
 #define DBG(...) {Serial.print("["); Serial.print(__FUNCTION__); Serial.print("(): "); Serial.print(__LINE__); Serial.print(" ] "); Serial.println(__VA_ARGS__);}
 #else
 #define DBG(...)
@@ -46,12 +48,22 @@
 #define REG_MCP23017_GPPUB    0x0D   //端口B上拉寄存器
 #define REG_MCP23017_INTFA    0x0E   //中断标志寄存器A，1表示发生中断，0无中断
 #define REG_MCP23017_INTFB    0x0F   //中断标志寄存器B，1表示发生中断，0无中断
-#define REG_MCP23017_INTCAPA  0x10   //中断捕获寄存器A
-#define REG_MCP23017_INTCAPB  0x11   //中断捕获寄存器B
+#define REG_MCP23017_INTCAPA  0x10   //中断捕获寄存器A，该寄存器反映了中断发生时，某引脚的逻辑电平，读取该寄存器可清除中断
+#define REG_MCP23017_INTCAPB  0x11   //中断捕获寄存器B，该寄存器反映了中断发生时，某引脚的逻辑电平，读取该寄存器可清除中断
 #define REG_MCP23017_GPIOA    0x12   //端口A数据寄存器，可读取或设置该寄存器的值，若引脚被设置为中断模式，可通过读取该寄存器，清除中断
 #define REG_MCP23017_GPIOB    0x13   //端口B数据寄存器，可读取或设置该寄存器的值，若引脚被设置为中断模式，可通过读取该寄存器，清除中断
 #define REG_MCP23017_OLATA    0x14   //写入锁存寄存器
 #define REG_MCP23017_OLATB    0x15   //写入锁存寄存器
+
+typedef void(*MCP23017_INT_CB)(void);
+class DFRobot_MCP23017;
+
+typedef struct{
+  int intno;
+  MCP23017_INT_CB cb;
+  String cbDescription;
+  DFRobot_MCP23017 *_this;
+}sMCP23017Interrupt_t;
 
 class DFRobot_MCP23017{
 public:
@@ -61,34 +73,35 @@ public:
   #define ERR_DATA_READ     -3      //数据总线读取失败
   #define ERR_ADDR_BUS      -4      //I2C地址错误
   typedef enum{
-      DA0 = 0,    //扩展板端口A引脚DA0，数字引脚0
-      DA1 = 1,    //扩展板端口A引脚DA1，数字引脚1
-      DA2 = 2,    //扩展板端口A引脚DA2，数字引脚2
-      DA3 = 3,    //扩展板端口A引脚DA3，数字引脚3
-      DA4 = 4,    //扩展板端口A引脚DA4，数字引脚4
-      DA5 = 5,    //扩展板端口A引脚DA5，数字引脚5
-      DA6 = 6,    //扩展板端口A引脚DA6，数字引脚6
-      DA7 = 7,    //扩展板端口A引脚DA7，数字引脚7
-      DB0 = 8,    //扩展板端口B引脚DB8，数字引脚8
-      DB1 = 9,    //扩展板端口B引脚DB9，数字引脚9
-      DB2 = 10,   //扩展板端口B引脚DB10，数字引脚10
-      DB3 = 11,   //扩展板端口B引脚DB11，数字引脚11
-      DB4 = 12,   //扩展板端口B引脚DB12，数字引脚12
-      DB5 = 13,   //扩展板端口B引脚DB13，数字引脚13
-      DB6 = 14,   //扩展板端口B引脚DB14，数字引脚14
-      DB7 = 15    //扩展板端口B引脚DB15，数字引脚15
+      eGPA0 = 0,  /**< 模块端口A ，数字引脚GPA0*/
+      eGPA1,  /**< 模块端口A ，数字引脚GPA1*/
+      eGPA2,  /**< 模块端口A ，数字引脚GPA2*/
+      eGPA3,  /**< 模块端口A ，数字引脚GPA3*/
+      eGPA4,  /**< 模块端口A ，数字引脚GPA4*/
+      eGPA5,  /**< 模块端口A ，数字引脚GPA5*/
+      eGPA6,  /**< 模块端口A ，数字引脚GPA6*/
+      eGPA7,  /**< 模块端口A ，数字引脚GPA7*/
+      eGPB0,  /**< 模块端口B ，数字引脚GPB0*/
+      eGPB1,  /**< 模块端口B ，数字引脚GPB1*/
+      eGPB2,  /**< 模块端口B ，数字引脚GPB2*/
+      eGPB3,  /**< 模块端口B ，数字引脚GPB3*/
+      eGPB4,  /**< 模块端口B ，数字引脚GPB4*/
+      eGPB5,  /**< 模块端口B ，数字引脚GPB5*/
+      eGPB6,  /**< 模块端口B ，数字引脚GPB6*/
+      eGPB7,  /**< 模块端口B ，数字引脚GPB7*/
+      eGPIOCounter
   }ePin_t;
   
   typedef enum{
-      LowMode = 0,   //低电平中断，当引脚变为低电平时,产生中断
-      HighMode = 1,  //高电平中断，当引脚变为高电平时,产生中断
-      ChangeMode = 2 //状态改变中断，当引脚电平由低->高或由高->低时,产生中断
+      eLowLevel = 0,   /**< 引脚中断配置参数，低电平中断 */
+      eHighLevel = 1,  /**< 引脚中断配置参数，高电平中断*/
+      eChangLevel = 2 /**< 引脚中断配置参数，双边沿跳变中断*/
   }eInterruptMode_t;
   
   typedef enum{
-      InputMode = 0,
-      OutPutMode = 1,
-      PullUpMode = 2,
+      eInputMode = 0,  /**< 引脚配置参数，浮空输入模式 最大输入电流25mA*/
+      eOutPutMode = 1, /**< 引脚配置参数，输出模式，最大输出电流25mA*/
+      ePullUpMode = 2, /**< 引脚配置参数，输入上拉模式，内部上拉电阻为 100 kΩ*/
   }eDirMode_t;
 public:
   /**
@@ -114,39 +127,46 @@ public:
   int begin(void);
   /**
    * @brief 设置引脚模式，将其配置为输入、输出或上拉输入模式
-   * @param p 引脚编号，可填0~15
-   * @param mode 模式，可设置成输入(InputMode)、输出(OutPutMode)、上拉输入(PullUpMode)模式
+   * @param p 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
+   * @param mode 模式，可设置成eDirMode_t包含的所有模式输入(eInputMode)、输出(eOutPutMode)、上拉输入(ePullUpMode)模式
    * @return 返回0表示设置成功，返回其他值表示设置失败
    */
   int pinMode(ePin_t p, eDirMode_t mode);
   /**
    * @brief 写数字引脚，在写引脚之前，需要将引脚设置为输出模式
-   * @param p 引脚编号，可填0~15
+   * @param p 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
    * @param level 高低电平 1(HIGH)或0(LOW)
    * @return 返回0表示设置成功，返回其他值表示写入失败
    */
   int digitalWrite(ePin_t p, uint8_t level);
   /**
    * @brief 读数字引脚，在读引脚之前，需要将引脚设置为输入模式
-   * @param p 引脚编号，可填0~15
+   * @param p 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
    * @return 返回高低电平
    */
   int digitalRead(ePin_t p);
   /**
    * @brief 将某个引脚设置为上升沿、下降沿、状态改变中断
-   * @param p 引脚编号，可填0~15
-   * @param mode 中断方式：低电平中断(LowMode)、高电平中断(HighMode)、状态改变中断(ChangeMode)
+   * @param p 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
+   * @param mode 中断方式：低电平中断(eLowLevel)、高电平中断(eHighLevel)、双边沿跳变中断(eChangeLevel)
    * @return 返回0表示设置成功，返回其他值表示写入失败
    */
   void setInterruptPins(ePin_t p, eInterruptMode_t mode);
   /**
-   * @brief 清除端口DA和端口DB中断标志位
-   * @return 返回0表示清除成功，返回其他值表示写入失败
+   * @brief 清除模块端口A端口B中断标志位
    */
-  int clearInterrupt();
+  void clearInterrupt();
+  /**
+   * @brief 清除模块端口A中断标志位
+   */
+  void clearInterruptA();
+  /**
+   * @brief 清除模块端口B中断标志位
+   */
+  void clearInterruptB();
   /**
    * @brief 读取某个引脚是否发生中断
-   * @param p 引脚编号，可填0~15
+   * @param p 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
    * @return 返回1表示发生中断，返回0表示无中断发生,返回其他值表示读取失败
    */
   int readInterruptFlag(ePin_t p);
@@ -174,23 +194,23 @@ protected:
    */
   int setPullUp(uint8_t reg, uint8_t index);
   /**
-   * @brief 将某个引脚设置为状态改变中断
+   * @brief 将某个引脚设置为双边沿跳变中断
    * @param index 引脚编号
    * @return 返回0表示设置成功，返回其他值表示设置失败
    */
-  int setChangeMode(uint8_t index);
+  int setInterruptModeChangeLevel(uint8_t index);
   /**
    * @brief 将某个引脚设置为高电平中断
    * @param index 引脚编号
    * @return 返回0表示设置成功，返回其他值表示设置失败
    */
-  int setHighMode(uint8_t index);
+  int setInterruptModeHighLevel(uint8_t index);
   /**
    * @brief 将某个引脚设置为低电平中断
    * @param index 引脚编号
    * @return 返回0表示设置成功，返回其他值表示设置失败
    */
-  int setLowMode(uint8_t index);
+  int setInterruptModeLowLevel(uint8_t index);
   /**
    * @brief 将一个8比特位数据的指定位置0或置1
    * @param val 8比特数据
