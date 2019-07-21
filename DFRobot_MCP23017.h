@@ -26,7 +26,7 @@
 #include <Wire.h>
 
 //定义调试宏，若想打开调试宏可将0改为1，关闭可将1改为0
-#if 1
+#if 0
 #define DBG(...) {Serial.print("["); Serial.print(__FUNCTION__); Serial.print("(): "); Serial.print(__LINE__); Serial.print(" ] "); Serial.println(__VA_ARGS__);}
 #else
 #define DBG(...)
