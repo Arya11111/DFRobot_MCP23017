@@ -9,10 +9,22 @@
  * @version  V1.0
  * @date  2019-07-18
  * @get from https://www.dfrobot.com
- * @url https://github.com/Arya11111/DFRobot_MCP23017
+ * @url https://github.com/DFRobot/DFRobot_MCP23017
  */
 #include <DFRobot_MCP23017.h>
-
+/*DFRobot_MCP23017构造函数
+ *参数&wire 可填TwoWire对象Wire
+ *参数addr  如下I2C地址可用0x20~0x27，拨码开关A2、A1、A0与I2C地址对应关系如下所示（默认0x27）：
+  * 0  0  1  0  | 0  A2 A1 A0
+    0  0  1  0  | 0  1  1  1    0x27
+    0  0  1  0  | 0  1  1  0    0x26
+    0  0  1  0  | 0  1  0  1    0x25
+    0  0  1  0  | 0  1  0  0    0x24
+    0  0  1  0  | 0  0  1  1    0x23
+    0  0  1  0  | 0  0  1  0    0x22
+    0  0  1  0  | 0  0  0  1    0x21
+    0  0  1  0  | 0  0  0  0    0x20
+ */
 DFRobot_MCP23017 mcp(Wire, 0x27);//构造函数，地址可通过拨码开关更改A2A1A0的高低电平，实现硬件更改地址，范围0x20~0x27
 //DFRobot_MCP23017 mcp;//这样定义会使用默认参数， Wire  0x27(默认I2C地址)
 
@@ -28,7 +40,7 @@ void setup() {
   }
 
   /*setInterruptPins函数用于将引脚设置中断引脚，该函数会自动将引脚设置为输入模式
-  参数pin 如下参数都是可用的：
+  参数p 如下参数都是可用的：
   eGPA0  eGPA1  eGPA2  eGPA3  eGPA4  eGPA5  eGPA6  eGPA7
    0    1    2    3    4    5    6    7
   eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
@@ -45,7 +57,14 @@ void func(){
 }
 
 void loop() {
-  if(mcp.readInterruptFlag(mcp.eGPA0) == 1){//发生中断
+  /*readInterruptFlag读取某个引脚是否发生中断
+  参数p 可以直接指定扩展板的引脚，如下参数都是可用的：
+ eGPA0  eGPA1  eGPA2  eGPA3  eGPA4  eGPA5  eGPA6  eGPA7
+   0       1      2      3      4      5      6      7
+  eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
+   8       9      10     11     12     13     14     15
+  */
+  if(mcp.readInterruptFlag(/*p = */mcp.eGPA0) == 1){//发生中断
       func();
   }
   delay(1000);

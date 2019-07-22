@@ -1,3 +1,14 @@
+/*!
+ * @file DFRobot_MCP23017.h
+ * @brief 定义 DFRobot_MCP23017 类的基础结构，基础方法的实现
+ *
+ * @copyright   Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
+ * @licence     The MIT License (MIT)
+ * @author [Arya](xue.peng@dfrobot.com)
+ * @version  V1.0
+ * @date  2019-07-16
+ * @https://github.com/DFRobot/DFRobot_MCP23017
+ */
 #include <Arduino.h>
 #include <DFRobot_MCP23017.h>
 
@@ -11,6 +22,24 @@ DFRobot_MCP23017::~DFRobot_MCP23017(){
 
 }
 
+void DFRobot_MCP23017::test(){
+  uint8_t value = 0;
+  for(uint8_t ad = 0x00; ad < 0x16; ad++){
+     readReg(ad, &value, 1);
+	 Serial.print("0x");
+      if(ad < 0x10){
+          Serial.print("0");
+      }
+      Serial.print(ad, HEX);
+      Serial.print(": 0x");
+      if(value < 0x10){
+          Serial.print("0");
+      }
+      Serial.print(value, HEX);
+      Serial.println(" ");
+  }
+}
+
 int DFRobot_MCP23017::begin(void){
   DBG("");
   _pWire->begin();
@@ -19,10 +48,10 @@ int DFRobot_MCP23017::begin(void){
       DBG("I2C ADDR ERROR!");
       return ERR_ADDR_BUS;
   }
-  uint8_t value = 0x00;
-  uint8_t val = 0xff;
-  writeReg(REG_MCP23017_IODIRA, &val, 1);
-  writeReg(REG_MCP23017_IODIRB, &val, 1);
+  uint8_t value = 0xff;
+  writeReg(REG_MCP23017_IODIRA, &value, 1);
+  writeReg(REG_MCP23017_IODIRB, &value, 1);
+  value = 0x00;
   for(uint8_t ad = 0x02; ad < 0x16; ad++){
      if((ad > REG_MCP23017_GPPUA) && (ad < REG_MCP23017_GPIOA)){
          continue;
@@ -32,14 +61,14 @@ int DFRobot_MCP23017::begin(void){
   return 0;
 }
 
-int DFRobot_MCP23017::pinMode(ePin_t p, eDirMode_t mode){
+int DFRobot_MCP23017::pinMode(ePin_t p, uint8_t mode){
   uint8_t pin = (uint8_t)p;
-  if(pin >= /*15*/(uint8_t)eGPIOCounter){
+  if(pin >= /*15*/(uint8_t)eGPIOTotal){
       DBG("pin ERROR!");
       return ERR_PIN;
   }
   switch(mode){
-      case eInputMode: 
+      case INPUT: 
              if(pin < (uint8_t)eGPB0){
                  setInput(REG_MCP23017_IODIRA, pin);
              }else{
@@ -47,7 +76,7 @@ int DFRobot_MCP23017::pinMode(ePin_t p, eDirMode_t mode){
              }
              DBG("将引脚");DBG(pin);DBG("设置为输入模式");
              break;
-      case eOutPutMode: 
+      case OUTPUT: 
              if(pin < (uint8_t)eGPB0){
                  setOutput(REG_MCP23017_IODIRA, pin);
              }else{
@@ -71,17 +100,19 @@ int DFRobot_MCP23017::pinMode(ePin_t p, eDirMode_t mode){
 
 int DFRobot_MCP23017::digitalWrite(ePin_t p, uint8_t level){
   uint8_t pin = (uint8_t)p;
-  if(pin >= /*15*/(uint8_t)eGPIOCounter){
+  if(pin >= /*15*/(uint8_t)eGPIOTotal){
       DBG("pin ERROR!");
       return ERR_PIN;
   }
   uint8_t value = 0;
   if(pin < (uint8_t)eGPB0){
-      if(readReg(REG_MCP23017_OLATA, &value, 1) != 1){
+      if(readReg(REG_MCP23017_GPIOA/*REG_MCP23017_OLATA*/, &value, 1) != 1){
           DBG("I2C READ ERROR!");
           return ERR_DATA_READ;
       }
-      value = updateBit(value, pin, level);
+      value = 0xFF;
+	  //value = updateBit(value, pin, level);
+      //writeReg(REG_MCP23017_OLATA, &value, 1);
       writeReg(REG_MCP23017_GPIOA, &value, 1);
       DBG("向端口A的");DBG(pin);DBG("引脚写入高(1)或低(0)电平: ");DBG(level);
   }else{
@@ -93,13 +124,14 @@ int DFRobot_MCP23017::digitalWrite(ePin_t p, uint8_t level){
       writeReg(REG_MCP23017_GPIOB, &value, 1);
       DBG("向端口B的");DBG(pin);DBG("引脚写入高(1)或低(0)电平: ");DBG(level);
   }
+  test();
   return ERR_OK;
 }
 
 int DFRobot_MCP23017::digitalRead(ePin_t p){
   uint8_t pin = (uint8_t)p;
   uint8_t value = 0;
-  if(pin >= /*15*/(uint8_t)eGPIOCounter){
+  if(pin >= /*15*/(uint8_t)eGPIOTotal){
       DBG("pin ERROR!");
       return ERR_PIN;
   }
@@ -117,11 +149,11 @@ int DFRobot_MCP23017::digitalRead(ePin_t p){
 
 void DFRobot_MCP23017::setInterruptPins(ePin_t p, eInterruptMode_t mode){
   uint8_t pin = (uint8_t)p;
-  if(pin >= /*15*/(uint8_t)eGPIOCounter){
+  if(pin >= /*15*/(uint8_t)eGPIOTotal){
       DBG("PIN ERROR!");
       return ;
   }
-  pinMode(p, eInputMode);
+  pinMode(p, INPUT);
   interruptConfig();
   switch(mode){
       case eLowLevel:
@@ -152,7 +184,7 @@ void DFRobot_MCP23017::clearInterruptA(){
       DBG("I2C READ ERROR!");
       return;
   }
-  return ERR_OK;
+  return ;
 }
 
 void DFRobot_MCP23017::clearInterruptB(){
@@ -162,7 +194,7 @@ void DFRobot_MCP23017::clearInterruptB(){
       DBG("I2C READ ERROR!");
       return;
   }
-  return ERR_OK;
+  return ;
 }
 
 int DFRobot_MCP23017::readInterruptFlag(ePin_t p){
@@ -170,7 +202,7 @@ int DFRobot_MCP23017::readInterruptFlag(ePin_t p){
   uint8_t regAddr = 0;
   uint8_t value = 0;
   DBG("读取引脚")DBG(pin);DBG("是否发生中断，发生中断返回1，否则返回0");
-  if(pin >= /*15*/(uint8_t)eGPIOCounter){
+  if(pin >= /*15*/(uint8_t)eGPIOTotal){
       DBG("I2C READ ERROR!");
       return ERR_PIN;
   }

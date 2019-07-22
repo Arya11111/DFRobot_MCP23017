@@ -11,14 +11,26 @@
  * @version  V1.0
  * @eGPAte  2019-07-18
  * @get from https://www.dfrobot.com
- * @url https://github.com/Arya11111/DFRobot_MCP23017
+ * @url https://github.com/DFRobot/DFRobot_MCP23017
  */
 
 #include <DFRobot_MCP23017.h>
 #define NOINTFLAG 0   //无中断标志
 #define INTAFLAG  1   //INTA中断标志
 #define INTBFLAG  2   //INTB中断标志
-
+/*DFRobot_MCP23017构造函数
+ *参数&wire 可填TwoWire对象Wire
+ *参数addr  如下I2C地址可用0x20~0x27，拨码开关A2、A1、A0与I2C地址对应关系如下所示（默认0x27）：
+  * 0  0  1  0  | 0  A2 A1 A0
+    0  0  1  0  | 0  1  1  1    0x27
+    0  0  1  0  | 0  1  1  0    0x26
+    0  0  1  0  | 0  1  0  1    0x25
+    0  0  1  0  | 0  1  0  0    0x24
+    0  0  1  0  | 0  0  1  1    0x23
+    0  0  1  0  | 0  0  1  0    0x22
+    0  0  1  0  | 0  0  0  1    0x21
+    0  0  1  0  | 0  0  0  0    0x20
+ */
 DFRobot_MCP23017 mcp(Wire, 0x27);//构造函数，地址可通过拨码开关更改A2A1A0的高低电平，实现硬件更改地址，范围0x20~0x27
 //DFRobot_MCP23017 mcp;//这样定义会使用默认参数， Wire  0x27(默认I2C地址)
 
@@ -31,9 +43,11 @@ int interrputBFlag = NOINTFLAG;//INTB中断标志
 void setup() {
   Serial.begin(115200);
   #ifdef ARDUINO_ARCH_MPYTHON 
+  Serial.println("++++++++++++++");
   pinMode(P0, INPUT);//使用掌控外部中断,INTA连接到掌控P0引脚
   pinMode(P1, INPUT);//使用掌控外部中断,INTB连接到掌控P1引脚
   #else
+  Serial.println("1111111111111");
   pinMode(2, INPUT);//使用UNO的外部中断0
   pinMode(3, INPUT);//使用UNO的外部中断1
   #endif
@@ -44,7 +58,7 @@ void setup() {
     delay(1000);
   }
   /*setInterruptPins函数用于将引脚设置中断引脚，该函数会自动将引脚设置为输入模式
-  参数pin 如下参数都是可用的：
+  参数p 如下参数都是可用的：
   eGPA0  eGPA1  eGPA2  eGPA3  eGPA4  eGPA5  eGPA6  eGPA7
    0    1    2    3    4    5    6    7
   eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
@@ -93,14 +107,16 @@ void setup() {
 }
 
 void funA(){
-  interrputFlag = INTAFLAG;
+  //Serial.println("PortA GPA0 High Level Interrupt!");
+  //mcp.clearInterruptA();//清除端口A的中断
 }
 void funB(){
-  interrputFlag = INTBFLAG;
+  //Serial.println("PortB GPB0 High Level Interrupt!");
+  //mcp.clearInterruptB();//清除端口B的中断
 }
 
 void loop() {
-  if(interrputFlag == INTAFLAG){
+ if(interrputFlag == INTAFLAG){
     Serial.println("PortA GPA0 High Level Interrupt!");
     interrputFlag = NOINTFLAG;
   }else if(interrputFlag == INTBFLAG){

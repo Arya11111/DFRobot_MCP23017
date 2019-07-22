@@ -1,7 +1,7 @@
 /*!
  * @file DFRobot_MCP23017.h
  * @brief 定义 DFRobot_MCP23017 类的基础结构
- * @n 这是一个数字I/O扩展板，IIC地址可改变,可以通过IIC口来控制它，它有下面这些功能
+ * @n 这是一个数字I/O扩展板，IIC地址可改变,可以通过IIC接口来控制它，它有下面这些功能
  * @n 16-bit input/output port expander with interrupt output
  * @n Cascadable for up to 8 devices on one bus
  * @n 25mA sink/source capability per I/O
@@ -9,10 +9,10 @@
 
  * @copyright   Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @licence     The MIT License (MIT)
- * @author [Arya]
+ * @author [Arya](xue.peng@dfrobot.com)
  * @version  V1.0
  * @date  2019-07-16
- * @https://github.com/ouki-wang/DFRobot_Sensor
+ * @https://github.com/DFRobot/DFRobot_MCP23017
  */
 #ifndef __DFROBOT_MCP23017_H
 #define __DFROBOT_MCP23017_H
@@ -22,7 +22,6 @@
 #else
 #include "WProgram.h"
 #endif
-#include <HardwareSerial.h>
 #include <Wire.h>
 
 //定义调试宏，若想打开调试宏可将0改为1，关闭可将1改为0
@@ -89,7 +88,7 @@ public:
       eGPB5,  /**< 模块端口B ，数字引脚GPB5*/
       eGPB6,  /**< 模块端口B ，数字引脚GPB6*/
       eGPB7,  /**< 模块端口B ，数字引脚GPB7*/
-      eGPIOCounter
+      eGPIOTotal
   }ePin_t;
   
   typedef enum{
@@ -97,12 +96,7 @@ public:
       eHighLevel = 1,  /**< 引脚中断配置参数，高电平中断*/
       eChangLevel = 2 /**< 引脚中断配置参数，双边沿跳变中断*/
   }eInterruptMode_t;
-  
-  typedef enum{
-      eInputMode = 0,  /**< 引脚配置参数，浮空输入模式 最大输入电流25mA*/
-      eOutPutMode = 1, /**< 引脚配置参数，输出模式，最大输出电流25mA*/
-      ePullUpMode = 2, /**< 引脚配置参数，输入上拉模式，内部上拉电阻为 100 kΩ*/
-  }eDirMode_t;
+
 public:
   /**
    * @brief 构造函数
@@ -125,13 +119,14 @@ public:
    * @return 返回0表示初始化成功，返回其他值表示初始化失败
    */
   int begin(void);
+  void test();
   /**
    * @brief 设置引脚模式，将其配置为输入、输出或上拉输入模式
    * @param p 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
-   * @param mode 模式，可设置成eDirMode_t包含的所有模式输入(eInputMode)、输出(eOutPutMode)、上拉输入(ePullUpMode)模式
+   * @param mode 模式，可设置成eDirMode_t包含的所有模式输入(INPUT)、输出(OUTPUT)、上拉输入(INPUT_PULLUP)模式
    * @return 返回0表示设置成功，返回其他值表示设置失败
    */
-  int pinMode(ePin_t p, eDirMode_t mode);
+  int pinMode(ePin_t p, uint8_t mode);
   /**
    * @brief 写数字引脚，在写引脚之前，需要将引脚设置为输出模式
    * @param p 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
