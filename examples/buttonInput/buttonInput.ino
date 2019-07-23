@@ -42,7 +42,7 @@ void setup() {
    0       1      2      3      4      5      6      7
   eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
    8       9      10     11     12     13     14     15
-  参数mode 如下参数是可用的：可设置成eDirMode_t包含的所有模式输入(INPUT)、输出(OUTPUT)、上拉输入(INPUT_PULLUP)模式
+  参数mode 如下参数是可用的：可设置成输入(INPUT)、输出(OUTPUT)、上拉输入(INPUT_PULLUP)模式
   */
   mcp.pinMode(/*pin = */mcp.eGPA0, /*mode = */INPUT);
 }

@@ -1,5 +1,6 @@
 # DFRobot_MCP23017
-这是一款16位数字IO口扩展板，通过I2C接口与主控通信，可以连接并读取各种数字传感器件（如：按钮）的数据，并设置数字执行器件的值（如：LED灯），可支持8个iic地址，最多可以8个模块并联在一块主控上，一次最多扩展128个IO口<br>
+这是一款16位数字IO口扩展板，通过I2C接口与主控通信，可以读取并设置引脚的电平值。<br>
+支持8个IIC地址，一块主控上最多并联8个模块，一次最多扩展128个IO口。<br>
 
 这里需要显示拍照图片，可以一张图片，可以多张图片（不要用SVG图）
 
@@ -20,12 +21,11 @@
 
 ## Summary
 
-1.设置引脚输入、输出、上拉输入模式；<br>
-2.读取引脚高低电平状态；<br>
-3.设置引脚输出高低电平；<br>
-4.中断方式：高电平中断、低电平中断、状态改变中断.<br>
-5.INTA和INTB信号引脚中断，当端口DA或端口DB的某些引脚发生中断时，相应的INTA和INTB将产生高电平信号；<br>
-6.软中断，将某个引脚设置为中断模式，当中断发生时，可通过软件读取中断是否发生。<br>
+1. 设置引脚模式：输入模式、输出模式、上拉输入模式；<br>
+2. 读取并设置引脚电平值；<br>
+3. 支持5种中断方式：高电平中断、低电平中断、上升沿中断、下降沿中断、双边沿跳变中断；<br>
+4. 支持2路中断信号输出：当端口A的某个引脚发生中断时，INTA引脚输出高电平，当端口B的某个引脚发生中断，INTB引脚输出高电平；<br>
+5. 轮询中断：可通过轮询中断函数，检测引脚是否发生中断，并执行相应的中断服务函数；<br>
 
 ## Installation
 
@@ -39,45 +39,50 @@ To use this library, first download the library file, paste it into the \Arduino
  * @return 返回0表示初始化成功，返回其他值表示初始化失败
  */
 int begin(void);
+
 /**
  * @brief 设置引脚模式，将其配置为输入、输出或上拉输入模式
- * @param pin_ 引脚编号，可填0~15
- * @param mode 模式，可设置成输入(1)、输出(0)、上拉输入(2)模式
+ * @param pin 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
+ * @param mode 模式，可设置成eDirMode_t包含的所有模式输入(INPUT)、输出(OUTPUT)、上拉输入(INPUT_PULLUP)模式
  * @return 返回0表示设置成功，返回其他值表示设置失败
  */
-int pinMode(ePin_t pin_, uint8_t mode);
+int pinMode(ePin_t pin, uint8_t mode);
+
 /**
  * @brief 写数字引脚，在写引脚之前，需要将引脚设置为输出模式
- * @param pin_ 引脚编号，可填0~15
+ * @param pin 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
  * @param level 高低电平 1(HIGH)或0(LOW)
  * @return 返回0表示设置成功，返回其他值表示写入失败
  */
-int digitalWrite(ePin_t pin_, uint8_t level);
+int digitalWrite(ePin_t pin, uint8_t level);
+
 /**
  * @brief 读数字引脚，在读引脚之前，需要将引脚设置为输入模式
- * @param pin_ 引脚编号，可填0~15
+ * @param pin 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
  * @return 返回高低电平
  */
-int digitalRead(ePin_t pin_);
+int digitalRead(ePin_t pin);
+
 /**
- * @brief 将某个引脚设置为上升沿、下降沿、状态改变中断
- * @param pin_ 引脚编号，可填0~15
- * @param mode_ 中断方式：低电平中断(LowMode)、高电平中断(HighMode)、状态改变中断(ChangeMode)
- * @return 返回0表示设置成功，返回其他值表示写入失败
+ * @brief 将某个引脚设置为中断模式
+ * @param pin 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
+ * @param mode 中断方式：可填eInterruptMode_t包含的所有枚举值
+ * @param cb 中断服务函数，由用户外部定义函数传参，原型为void func(int)
  */
-void setInterruptPins(ePin_t pin_, eInterruptMode_t mode_);
+void pinModeInterrupt(ePin_t pin, eInterruptMode_t mode,  MCP23017_INT_CB cb);
+
 /**
- * @brief 清除端口DA和端口DB中断标志位
- * @return 返回0表示清除成功，返回其他值表示写入失败
+ * @brief 轮询某组端口是否发生中断
+ * @param group 端口组，可填eGPIOGrout_t包含的所有枚举值GPIO A组（eGPIOA）、GPIO B组（eGPIOB）A+B组（eGPIOALL）
  */
-int clearInterrupt();
+void pollInterrupts(eGPIOGrout_t group=eGPIOALL);
+
 /**
- * @brief 将某个引脚设置为上升沿、下降沿、状态改变中断
- * @param pin_ 引脚编号，可填0~15 
- * @param mode_ 中断方式：低电平中断(LowMode)、高电平中断(HighMode)、状态改变中断(ChangeMode)
- * @return 返回1表示发生中断，返回0表示无中断发生,返回其他值表示读取失败
+ * @brief 将引脚转为字符串描述
+ * @param pin 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
+ * @return 返回引脚描述字符串
  */
-int readInterruptFlag(ePin_t pin_);
+String pinDescription(ePin_t pin);
 ```
 
 ## Compatibility
@@ -94,7 +99,6 @@ Microbit        |      √       |              |             |
 
 - data 2019-7-18
 - version V1.0
-
 
 ## Credits
 

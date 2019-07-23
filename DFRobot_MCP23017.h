@@ -31,6 +31,12 @@
 #define DBG(...)
 #endif
 
+#if 0
+#define DBGI(...) {Serial.print("["); Serial.print(__FUNCTION__); Serial.print("(): "); Serial.print(__LINE__); Serial.print(" ] "); Serial.println(__VA_ARGS__);}
+#else
+#define DBGI(...)
+#endif
+
 #define REG_MCP23017_IODIRA   0x00   //端口A方向寄存器
 #define REG_MCP23017_IODIRB   0x01   //端口B方向寄存器
 #define REG_MCP23017_IPOLA    0x02   //IO极性寄存器，默认为0，如果设置为1，当引脚检测到高电平时，会被当做低电平写入
@@ -54,23 +60,21 @@
 #define REG_MCP23017_OLATA    0x14   //写入锁存寄存器
 #define REG_MCP23017_OLATB    0x15   //写入锁存寄存器
 
-typedef void(*MCP23017_INT_CB)(void);
-class DFRobot_MCP23017;
-
-typedef struct{
-  int intno;
-  MCP23017_INT_CB cb;
-  String cbDescription;
-  DFRobot_MCP23017 *_this;
-}sMCP23017Interrupt_t;
+typedef void(*MCP23017_INT_CB)(int index);
 
 class DFRobot_MCP23017{
 public:
   #define ERR_OK             0      //无错误
-  #define ERR_DATA_BUS      -1      //数据总线错误
-  #define ERR_PIN           -2      //引脚编号错误
-  #define ERR_DATA_READ     -3      //数据总线读取失败
-  #define ERR_ADDR_BUS      -4      //I2C地址错误
+  #define ERR_PIN           -1      //引脚编号错误
+  #define ERR_DATA_READ     -2      //数据总线读取失败
+  #define ERR_ADDR          -3      //I2C地址错误
+  
+  typedef enum{
+      eGPIOA = 1,  /**< GPIO A组*/
+      eGPIOB = 2,  /**< GPIO B组*/
+      eGPIOALL = 3 /**< GPIO A+B组*/
+  }eGPIOGrout_t;
+  
   typedef enum{
       eGPA0 = 0,  /**< 模块端口A ，数字引脚GPA0*/
       eGPA1,  /**< 模块端口A ，数字引脚GPA1*/
@@ -93,10 +97,35 @@ public:
   
   typedef enum{
       eLowLevel = 0,   /**< 引脚中断配置参数，低电平中断 */
-      eHighLevel = 1,  /**< 引脚中断配置参数，高电平中断*/
-      eChangLevel = 2 /**< 引脚中断配置参数，双边沿跳变中断*/
+      eHighLevel,  /**< 引脚中断配置参数，高电平中断*/
+      eRising,  /**< 引脚中断配置参数，上升沿中断*/
+      eFalling,  /**< 引脚中断配置参数，下降沿中断*/
+      eChangeLevel     /**< 引脚中断配置参数，双边沿跳变中断*/
   }eInterruptMode_t;
 
+  
+  typedef struct {
+    ePin_t pin;  /**< 数字引脚，范围0~15 */
+    const char * description;/**< 数字引脚字符串描述，GPIOA0~GPIOB7 */
+  } __attribute__ ((packed)) sPinDescription_t;
+  
+  typedef struct {
+    uint8_t   RESERVE: 1; /**< offset = 0*/
+    uint8_t   INTPOL: 1;
+    uint8_t   ODR: 1;
+    uint8_t   HAEN: 1;
+    uint8_t   DISSLW: 1; /**< offset = 4*/
+    uint8_t   SEQOP: 1;  /**< offset = 5*/
+    uint8_t   MIRROR: 1; /**< offset = 6*/
+    uint8_t   BANK: 1;   /**< offset = 7*/
+  } __attribute__ ((packed)) sIOCON_t;
+  
+  typedef struct {
+    eInterruptMode_t mode;
+    MCP23017_INT_CB cb;
+  } __attribute__ ((packed)) sModeCB_t;
+  
+  
 public:
   /**
    * @brief 构造函数
@@ -121,49 +150,42 @@ public:
   int begin(void);
   /**
    * @brief 设置引脚模式，将其配置为输入、输出或上拉输入模式
-   * @param p 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
+   * @param pin 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
    * @param mode 模式，可设置成eDirMode_t包含的所有模式输入(INPUT)、输出(OUTPUT)、上拉输入(INPUT_PULLUP)模式
    * @return 返回0表示设置成功，返回其他值表示设置失败
    */
-  int pinMode(ePin_t p, uint8_t mode);
+  int pinMode(ePin_t pin, uint8_t mode);
   /**
    * @brief 写数字引脚，在写引脚之前，需要将引脚设置为输出模式
-   * @param p 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
+   * @param pin 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
    * @param level 高低电平 1(HIGH)或0(LOW)
    * @return 返回0表示设置成功，返回其他值表示写入失败
    */
-  int digitalWrite(ePin_t p, uint8_t level);
+  int digitalWrite(ePin_t pin, uint8_t level);
   /**
    * @brief 读数字引脚，在读引脚之前，需要将引脚设置为输入模式
-   * @param p 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
+   * @param pin 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
    * @return 返回高低电平
    */
-  int digitalRead(ePin_t p);
+  int digitalRead(ePin_t pin);
   /**
-   * @brief 将某个引脚设置为上升沿、下降沿、状态改变中断
-   * @param p 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
-   * @param mode 中断方式：低电平中断(eLowLevel)、高电平中断(eHighLevel)、双边沿跳变中断(eChangeLevel)
-   * @return 返回0表示设置成功，返回其他值表示写入失败
+   * @brief 将某个引脚设置为中断模式
+   * @param pin 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
+   * @param mode 中断方式：可填eInterruptMode_t包含的所有枚举值
+   * @param cb 中断服务函数，由用户外部定义函数传参，原型为void func(int)
    */
-  void setInterruptPins(ePin_t p, eInterruptMode_t mode);
+  void pinModeInterrupt(ePin_t pin, eInterruptMode_t mode,  MCP23017_INT_CB cb);
   /**
-   * @brief 清除模块端口A端口B中断标志位
+   * @brief 轮询某组端口是否发生中断
+   * @param group 端口组，可填eGPIOGrout_t包含的所有枚举值GPIO A组（eGPIOA）、GPIO B组（eGPIOB）A+B组（eGPIOALL）
    */
-  void clearInterrupt();
+  void pollInterrupts(eGPIOGrout_t group=eGPIOALL);
   /**
-   * @brief 清除模块端口A中断标志位
+   * @brief 将引脚转为字符串描述
+   * @param pin 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
+   * @return 返回引脚描述字符串
    */
-  void clearInterruptA();
-  /**
-   * @brief 清除模块端口B中断标志位
-   */
-  void clearInterruptB();
-  /**
-   * @brief 读取某个引脚是否发生中断
-   * @param p 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
-   * @return 返回1表示发生中断，返回0表示无中断发生,返回其他值表示读取失败
-   */
-  int readInterruptFlag(ePin_t p);
+  String pinDescription(ePin_t pin);
 
 protected:
   /**
@@ -241,6 +263,8 @@ protected:
   uint8_t readReg(uint8_t reg, void* pBuf, size_t size);
 
 private:
+  sModeCB_t _cbs[eGPIOTotal];
+  static sPinDescription_t _pinDescriptions[eGPIOTotal];
   TwoWire *_pWire;
   uint8_t _addr;
 };

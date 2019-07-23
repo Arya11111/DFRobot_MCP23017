@@ -1,9 +1,8 @@
 /*!
  * @file ioInterrupt.ino
- * @brief IO中断，将IO扩展板的某个引脚设置为中断模式（高电平中断、低电平中断、状态改变中断(上升沿和下降沿都会发生中断)），当对应端口中断事件发生时INTA或INTB将输出一个高电平
- * INTA用来检测端口eGPA的引脚是否发生中断,INTB用来检测端口eGPB的引脚是否发生中断;将INTA和INTB引脚分别连接到UNO的外部中断0和外部中断1
- * @n 实验现象：当端口A的某个引脚发生中断时，调用函数funA，并串口打印"端口A中发生中断"
- * 当端口B的某个引脚发生中断时，调用函数funB，并串口打印"端口B中发生中断"
+ * @brief IO中断，将IO扩展板的某组端口（A组或B组）的某个引脚设置为中断模式,当对应组端口发生中断时，引脚INTA（对应A组端口）或INTB（对应B组端口）将输出一个高电平
+ * INTA用来检测端口eGPA的引脚是否发生中断,INTB用来检测端口eGPB的引脚是否发生中断;将INTA和INTB引脚分别连接到主控的外部中断0和外部中断1
+ * @n 实验现象：当主控检测到INTA或INTB引脚信号发生变化时，执行相应的中断服务函数，从而串口打印出是那个引脚发生了中断
  *
  * @copyright   Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @licence     The MIT License (MIT)
@@ -15,9 +14,6 @@
  */
 
 #include <DFRobot_MCP23017.h>
-#define NOINTFLAG 0   //无中断标志
-#define INTAFLAG  1   //INTA中断标志
-#define INTBFLAG  2   //INTB中断标志
 /*DFRobot_MCP23017构造函数
  *参数&wire 可填TwoWire对象Wire
  *参数addr  如下I2C地址可用0x20~0x27，拨码开关A2、A1、A0与I2C地址对应关系如下所示（默认0x27）：
@@ -37,8 +33,26 @@ DFRobot_MCP23017 mcp(Wire, /*addr =*/0x27);//构造函数，地址可通过拨�
 //将2个按钮分别连接到IO扩展板端口eGPA的某个引脚(例：eGPA0)和端口eGPB的某个引脚(例：eGPB0)
 //将INTA连接到UNO的外部中断0引脚上，INTB连接到UNO的外部中断1引脚上
 
-int interrputFlag = NOINTFLAG;//INTA中断标志
-int interrputBFlag = NOINTFLAG;//INTB中断标志
+bool intFlagA = false;//INTA中断标志
+bool intFlagB = false;//INTB中断标志
+
+/*中断服务函数，原型为 void func(int index),其中index代表那个引脚发生中断*/
+void gpa0CB(int index){
+  String description = mcp.pinDescription(index);
+  Serial.print(description);Serial.println(" Interruption occurs!");
+}
+
+void gpb7CB(int index){
+  /*pinDescription函数用来将某个引脚转换为字符串描述
+  参数pin 如下参数都是可用的
+  eGPA0  eGPA1  eGPA2  eGPA3  eGPA4  eGPA5  eGPA6  eGPA7
+   0    1    2    3    4    5    6    7
+  eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
+   8    9   10   11   12   13   14   15
+  */
+  String description = mcp.pinDescription(index);
+  Serial.print(description);Serial.println(" Interruption occurs!");
+}
 
 void setup() {
   Serial.begin(115200);
@@ -55,16 +69,20 @@ void setup() {
     Serial.println("Initialization of the chip failed, please confirm that the chip connection is correct!");
     delay(1000);
   }
-  /*setInterruptPins函数用于将引脚设置中断引脚，该函数会自动将引脚设置为输入模式
+  /*pinModeInterrupt函数用于将引脚设置中断模式，该函数会自动将引脚设置为输入模式
   参数pin 如下参数都是可用的：
   eGPA0  eGPA1  eGPA2  eGPA3  eGPA4  eGPA5  eGPA6  eGPA7
-   0    1    2    3    4    5    6    7
+    0      1      2      3      4      5      6      7
   eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
-   8    9   10   11   12   13   14   15
-  参数mode 如下参数是可用的：将引脚设置为低电平中断（eLowLevel）、高电平中断（eHighLevel）、双边沿跳变中断(eChangeLevel)模式
+    8      9      10     11     12     13     14     15
+  参数mode 如下参数是可用的：
+  eLowLevel    eHighLevel    eRising    eFalling    eChangeLevel
+  低电平中断   低电平中断    上升沿跳变 下降沿跳变  双边沿跳变中断
+  参数cb 中断服务函数(带参函数)
+  原型void func(int)
   */
-  mcp.setInterruptPins(/*pin = */mcp.eGPA0, /*mode = */mcp.eHighLevel);//数字引脚0(eGPA0)，高电平中断，当引脚0的状态为高电平时产生中断，INTA输出高电平
-  mcp.setInterruptPins(/*pin = */mcp.eGPB0, /*mode = */mcp.eHighLevel);//数字引脚8(eGPB0)，高电平中断，当引脚8的状态为高电平时产生中断，INTB输出高电平
+  mcp.pinModeInterrupt(/*pin = */mcp.eGPA0, /*mode = */mcp.eHighLevel, /*cb = */gpa0CB);//数字引脚0(eGPA0)，高电平中断，当引脚0的状态为高电平时产生中断，INTA输出高电平
+  mcp.pinModeInterrupt(/*pin = */mcp.eGPB7, /*mode = */mcp.eChangeLevel, /*cb = */gpb7CB);//数字引脚8(eGPB0)，双边沿跳变中断，当引脚8的状态改变时产生中断，INTB输出高电平
 
   #ifdef ARDUINO_ARCH_MPYTHON  //Microbit这里需要做一些单独处理吗
   /* 掌控 中断引脚与终端号码对应关系表
@@ -74,8 +92,8 @@ void setup() {
    * |                    | Interrupt No |  可用digitalPinToInterrupt(Pn) 查询中断号     |
    * |-----------------------------------------------------------------------------------|
    */
-  attachInterrupt(digitalPinToInterrupt(P0)/*查询P0引脚的中断号*/,funA,RISING);//开启掌控P0引脚的外部中断，上升沿触发，INTA连接P0
-  attachInterrupt(digitalPinToInterrupt(P1)/*查询P1引脚的中断号*/,funB,RISING);//开启掌控P1引脚的外部中断，上升沿触发，INTA连接P1
+  attachInterrupt(digitalPinToInterrupt(P0)/*查询P0引脚的中断号*/,notifyA,RISING);//开启掌控P0引脚的外部中断，上升沿触发，INTA连接P0
+  attachInterrupt(digitalPinToInterrupt(P1)/*查询P1引脚的中断号*/,notifyB,RISING);//开启掌控P1引脚的外部中断，上升沿触发，INTA连接P1
   #else
   /* AVR系列Arduino 中断引脚与终端号码对应关系表
    * ---------------------------------------------------------------------------------------
@@ -99,26 +117,30 @@ void setup() {
    * |(作为外部中断时，无需用pinMode将其设置为输入模式)  | Interrupt No | 中断号即引脚数字值，如P0中断号为0，P1为1 |
    * |-------------------------------------------------------------------------------------------------------------|
    */
-  attachInterrupt(/*中断号*/0,funA,RISING);//开启外部中断0,INTA连接至主控的数字引脚上：UNO(2),Mega2560(2),Leonardo(3),microbit(P0)
-  attachInterrupt(/*中断号*/1,funB,RISING);//开启外部中断1,INTB连接至主控的数字引脚上：UNO(3),Mega2560(3),Leonardo(2),microbit(P1)
+  attachInterrupt(/*中断号*/0,notifyA,RISING);//开启外部中断0,INTA连接至主控的数字引脚上：UNO(2),Mega2560(2),Leonardo(3),microbit(P0)
+  attachInterrupt(/*中断号*/1,notifyB,RISING);//开启外部中断1,INTB连接至主控的数字引脚上：UNO(3),Mega2560(3),Leonardo(2),microbit(P1)
   #endif
 }
-
-void funA(){
-  interrputFlag = INTAFLAG;
+/*中断服务函数*/
+void notifyA(){
+  intFlagA = true;
 }
-void funB(){
-  interrputFlag = INTBFLAG;
+void notifyB(){
+  intFlagB = true;
 }
 
 void loop() {
-  if(interrputFlag == INTAFLAG){
-    Serial.println("PortA GPA0 High Level Interrupt!");
-    interrputFlag = NOINTFLAG;
-  }else if(interrputFlag == INTBFLAG){
-    Serial.println("PortB GPB0 High Level Interrupt!");
-    interrputFlag = NOINTFLAG;
+  if(intFlagA){
+    intFlagA = false;
+    /*pollInterrupts函数用于轮询某组端口是否发生中断
+    参数group 如下参数都是可用的（默认值：eGPIOALL）：
+     eGPIOA   eGPIOB   eGPIOALL
+     A组端口  B组端口  A+B组端口
+    */
+    mcp.pollInterrupts(/*group = */mcp.eGPIOA);
   }
-  mcp.clearInterrupt();//清除端口A和端口B的中断
-  delay(1000);
+  if(intFlagB){
+    intFlagB = false;
+    mcp.pollInterrupts(/*group = */mcp.eGPIOB);
+  }
 }

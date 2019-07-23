@@ -16,11 +16,9 @@ begin	KEYWORD2
 pinMode	KEYWORD2
 digitalWrite	KEYWORD2
 digitalRead	KEYWORD2
-setInterruptPins	KEYWORD2
-clearInterrupt	KEYWORD2
-clearInterruptA	KEYWORD2
-clearInterruptB	KEYWORD2
-readInterruptFlag	KEYWORD2
+pinModeInterrupt	KEYWORD2
+pollInterrupts	KEYWORD2
+pinDescription	KEYWORD2
 
 #######################################
 # Instances (KEYWORD2)
@@ -47,9 +45,15 @@ eGPB4	LITERAL1
 eGPB5	LITERAL1
 eGPB6	LITERAL1
 eGPB7	LITERAL1
-ePinEnd	LITERAL1
+eGPIOTotal	LITERAL1
 eInterruptMode_t	LITERAL1
-eLowMode	LITERAL1
-eHighMode	LITERAL1
-eChangeMode	LITERAL1
+eLowLevel	LITERAL1
+eHighLevel	LITERAL1
+eRising	LITERAL1
+eFalling	LITERAL1
+eChangeLevel	LITERAL1
+eGPIOGrout_t	LITERAL1
+eGPIOA	LITERAL1
+eGPIOB	LITERAL1
+eGPIOALL	LITERAL1
 
