@@ -1,6 +1,6 @@
 /*!
  * @file DFRobot_MCP23017.h
- * @brief 定义 DFRobot_MCP23017 类的基础结构，基础方法的实现
+ * @brief 定义 DFRobot_MCP23017 类的基础结构,基础方法的实现
  *
  * @copyright   Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @licence     The MIT License (MIT)
@@ -20,24 +20,6 @@ DFRobot_MCP23017::DFRobot_MCP23017(TwoWire &wire, uint8_t addr)
 
 DFRobot_MCP23017::~DFRobot_MCP23017(){
 
-}
-
-void DFRobot_MCP23017::test(){
-  uint8_t value = 0;
-  for(uint8_t ad = 0x00; ad < 0x16; ad++){
-     readReg(ad, &value, 1);
-	 Serial.print("0x");
-      if(ad < 0x10){
-          Serial.print("0");
-      }
-      Serial.print(ad, HEX);
-      Serial.print(": 0x");
-      if(value < 0x10){
-          Serial.print("0");
-      }
-      Serial.print(value, HEX);
-      Serial.println(" ");
-  }
 }
 
 int DFRobot_MCP23017::begin(void){
@@ -106,13 +88,11 @@ int DFRobot_MCP23017::digitalWrite(ePin_t p, uint8_t level){
   }
   uint8_t value = 0;
   if(pin < (uint8_t)eGPB0){
-      if(readReg(REG_MCP23017_GPIOA/*REG_MCP23017_OLATA*/, &value, 1) != 1){
+      if(readReg(REG_MCP23017_OLATA, &value, 1) != 1){
           DBG("I2C READ ERROR!");
           return ERR_DATA_READ;
       }
-      value = 0xFF;
-	  //value = updateBit(value, pin, level);
-      //writeReg(REG_MCP23017_OLATA, &value, 1);
+      value = updateBit(value, pin, level);
       writeReg(REG_MCP23017_GPIOA, &value, 1);
       DBG("向端口A的");DBG(pin);DBG("引脚写入高(1)或低(0)电平: ");DBG(level);
   }else{
@@ -124,7 +104,6 @@ int DFRobot_MCP23017::digitalWrite(ePin_t p, uint8_t level){
       writeReg(REG_MCP23017_GPIOB, &value, 1);
       DBG("向端口B的");DBG(pin);DBG("引脚写入高(1)或低(0)电平: ");DBG(level);
   }
-  test();
   return ERR_OK;
 }
 
@@ -184,7 +163,7 @@ void DFRobot_MCP23017::clearInterruptA(){
       DBG("I2C READ ERROR!");
       return;
   }
-  return ;
+  return;
 }
 
 void DFRobot_MCP23017::clearInterruptB(){
@@ -194,7 +173,7 @@ void DFRobot_MCP23017::clearInterruptB(){
       DBG("I2C READ ERROR!");
       return;
   }
-  return ;
+  return;
 }
 
 int DFRobot_MCP23017::readInterruptFlag(ePin_t p){

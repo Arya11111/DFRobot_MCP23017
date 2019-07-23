@@ -25,7 +25,7 @@
     0  0  1  0  | 0  0  0  1    0x21
     0  0  1  0  | 0  0  0  0    0x20
  */
-DFRobot_MCP23017 mcp(Wire, 0x27);//构造函数，地址可通过拨码开关更改A2A1A0的高低电平，实现硬件更改地址，范围0x20~0x27
+DFRobot_MCP23017 mcp(Wire, /*addr =*/0x27);//构造函数，地址可通过拨码开关更改A2A1A0的高低电平，实现硬件更改地址，范围0x20~0x27
 //DFRobot_MCP23017 mcp;//这样定义会使用默认参数， Wire  0x27(默认I2C地址)
 
 //将按钮连接到IO扩展板的某个引脚(例：eGPA0)
@@ -40,32 +40,25 @@ void setup() {
   }
 
   /*setInterruptPins函数用于将引脚设置中断引脚，该函数会自动将引脚设置为输入模式
-  参数p 如下参数都是可用的：
+  参数pin 如下参数都是可用的：
   eGPA0  eGPA1  eGPA2  eGPA3  eGPA4  eGPA5  eGPA6  eGPA7
-   0    1    2    3    4    5    6    7
+    0      1      2      3      4      5      6      7
   eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
-   8    9   10   11   12   13   14   15
+   8      9      10     11      12     13     14    15
   参数mode 如下参数是可用的：将引脚设置为低电平中断（eLowLevel）、高电平中断（eHighLevel）、双边沿跳变中断(eChangeLevel)模式
   */
-  mcp.setInterruptPins(/*p = */mcp.eGPA0, /*mode = */mcp.eHighLevel);//数字引脚0(eGPA0)，高电平中断，当引脚0的状态为高电平时产生中断，INTA输出高电平
+  mcp.setInterruptPins(/*pin = */mcp.eGPA0, /*mode = */mcp.eHighLevel);//数字引脚0(eGPA0)，高电平中断，当引脚0的状态为高电平时产生中断，INTA输出高电平
 }
 
 void func(){
   Serial.println("Interruption occurs!");
-  mcp.clearInterruptA();//清除端口A的中断
-  //mcp.clearInterrupt();//清除端口A和B的所有中断
 }
 
 void loop() {
-  /*readInterruptFlag读取某个引脚是否发生中断
-  参数p 可以直接指定扩展板的引脚，如下参数都是可用的：
- eGPA0  eGPA1  eGPA2  eGPA3  eGPA4  eGPA5  eGPA6  eGPA7
-   0       1      2      3      4      5      6      7
-  eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
-   8       9      10     11     12     13     14     15
-  */
-  if(mcp.readInterruptFlag(/*p = */mcp.eGPA0) == 1){//发生中断
+  if(mcp.readInterruptFlag(mcp.eGPA0) == 1){//发生中断
       func();
+      mcp.clearInterruptA();//清除端口A的中断
+      //mcp.clearInterrupt();//清除端口A和B的所有中断
   }
   delay(1000);
 }

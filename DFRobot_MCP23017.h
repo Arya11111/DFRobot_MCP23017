@@ -1,7 +1,7 @@
 /*!
  * @file DFRobot_MCP23017.h
  * @brief 定义 DFRobot_MCP23017 类的基础结构
- * @n 这是一个数字I/O扩展板，IIC地址可改变,可以通过IIC接口来控制它，它有下面这些功能
+ * @n 这是一个数字I/O扩展板，IIC地址可改变,可以通过IIC口来控制它，它有下面这些功能
  * @n 16-bit input/output port expander with interrupt output
  * @n Cascadable for up to 8 devices on one bus
  * @n 25mA sink/source capability per I/O
@@ -119,7 +119,6 @@ public:
    * @return 返回0表示初始化成功，返回其他值表示初始化失败
    */
   int begin(void);
-  void test();
   /**
    * @brief 设置引脚模式，将其配置为输入、输出或上拉输入模式
    * @param p 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
