@@ -1,5 +1,5 @@
 # DFRobot_MCP23017
-这是一款16位数字IO口扩展板，通过I2C接口与主控通信，可以读取并设置引脚的电平值。<br>
+这是一款16位数字IO口扩展板，通过IIC接口与主控通信，可以读取并设置引脚的电平值。<br>
 支持8个IIC地址，一块主控上最多并联8个模块，一次最多扩展128个IO口。<br>
 
 这里需要显示拍照图片，可以一张图片，可以多张图片（不要用SVG图）
@@ -43,7 +43,7 @@ int begin(void);
 /**
  * @brief 设置引脚模式，将其配置为输入、输出或上拉输入模式
  * @param pin 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
- * @param mode 模式，可设置成eDirMode_t包含的所有模式输入(INPUT)、输出(OUTPUT)、上拉输入(INPUT_PULLUP)模式
+ * @param mode 模式，可设置输入(INPUT)、输出(OUTPUT)、上拉输入(INPUT_PULLUP)模式
  * @return 返回0表示设置成功，返回其他值表示设置失败
  */
 int pinMode(ePin_t pin, uint8_t mode);

@@ -151,7 +151,7 @@ public:
   /**
    * @brief 设置引脚模式，将其配置为输入、输出或上拉输入模式
    * @param pin 引脚编号，可填ePin_t包含的所有枚举值（eGPA0-eGPB7/ 0-15）
-   * @param mode 模式，可设置成eDirMode_t包含的所有模式输入(INPUT)、输出(OUTPUT)、上拉输入(INPUT_PULLUP)模式
+   * @param mode 模式，可设置成输入(INPUT)、输出(OUTPUT)、上拉输入(INPUT_PULLUP)模式
    * @return 返回0表示设置成功，返回其他值表示设置失败
    */
   int pinMode(ePin_t pin, uint8_t mode);
