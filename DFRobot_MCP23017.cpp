@@ -172,7 +172,7 @@ void DFRobot_MCP23017::pollInterrupts(eGPIOGrout_t group)
   if(group & eGPIOA){
     if(readReg(REG_MCP23017_INTFA, &value, 1) != 1){
       DBG("I2C READ ERROR!");
-      return ERR_DATA_READ;
+      return;
     }
     DBGI("INTFA=");DBGI(value,HEX);
     if(value != 0){
@@ -196,7 +196,7 @@ void DFRobot_MCP23017::pollInterrupts(eGPIOGrout_t group)
   if(group & eGPIOB){
     if(readReg(REG_MCP23017_INTFB, &value, 1) != 1){
       DBG("I2C READ ERROR!");
-      return ERR_DATA_READ;
+      return ;
     }
     DBGI("INTFB=");DBGI(value,HEX);
     if(value != 0){

@@ -37,7 +37,7 @@ void func(int index){
   eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
    8    9   10   11   12   13   14   15
   */
-  String description = mcp.pinDescription(/*pin = */index);
+  String description = mcp.pinDescription(/*pin = */(DFRobot_MCP23017::ePin_t)index);
   Serial.print(description);Serial.println(" Interruption occurs!");
 }
 

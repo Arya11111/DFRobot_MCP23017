@@ -38,11 +38,6 @@ bool intFlagB = false;//INTB中断标志
 
 /*中断服务函数，原型为 void func(int index),其中index代表那个引脚发生中断*/
 void gpa0CB(int index){
-  String description = mcp.pinDescription(index);
-  Serial.print(description);Serial.println(" Interruption occurs!");
-}
-
-void gpb7CB(int index){
   /*pinDescription函数用来将某个引脚转换为字符串描述
   参数pin 如下参数都是可用的
   eGPA0  eGPA1  eGPA2  eGPA3  eGPA4  eGPA5  eGPA6  eGPA7
@@ -50,7 +45,12 @@ void gpb7CB(int index){
   eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
    8    9   10   11   12   13   14   15
   */
-  String description = mcp.pinDescription(index);
+  String description = mcp.pinDescription((DFRobot_MCP23017::ePin_t)index);
+  Serial.print(description);Serial.println(" Interruption occurs!");
+}
+
+void gpb7CB(int index){
+  String description = mcp.pinDescription((DFRobot_MCP23017::ePin_t)index);
   Serial.print(description);Serial.println(" Interruption occurs!");
 }
 
