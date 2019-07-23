@@ -6,7 +6,7 @@
  * @n Cascadable for up to 8 devices on one bus
  * @n 25mA sink/source capability per I/O
  * @n Supports 100kHz, 400kHz and 1.7MHz I2C™Compatible compatible modes
-
+ *
  * @copyright   Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @licence     The MIT License (MIT)
  * @author [Arya](xue.peng@dfrobot.com)
