@@ -1,7 +1,7 @@
 /*!
  * @file buttonInput.ino
  * @brief 将IO扩展板的某个引脚(例：eGPA0)设置为输入模式，并接上按钮，用来检测按钮的状态
- * @n 实验现象：将按钮连接到IO扩展板的某个引脚(例：eGPA0),检测该引脚的高低电平，并串口打印出按钮的状态：松开、按下
+ * @n 实验现象：将按钮连接到IO扩展板的某个引脚(例：eGPA0),检测该引脚的高低电平，并串口打印出按钮的状态
  *
  * @copyright   Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @licence     The MIT License (MIT)
@@ -58,8 +58,8 @@ void loop() {
   uint8_t value = mcp.digitalRead(/*pin = */mcp.eGPA0);
   if(value){
       Serial.println("Button press!");
+      delay(200);
   }else{
-      Serial.println("Button release!");
+      //Serial.println("Button release!");
   }
-  delay(1000);
 }

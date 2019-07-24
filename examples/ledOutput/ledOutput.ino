@@ -1,7 +1,7 @@
 /*!
  * @file ledOutput.ino
- * @brief 将IO扩展板的某个引脚(例：eGPA0)设置为输出模式，并输出高低电平
- * @n 实验现象：连在扩展板某个引脚(例：eGPA0)的LED灯先亮1s再灭1s，以此循环
+ * @brief 将IO扩展板的某个引脚(例：eGPA7)设置为输出模式，并输出高低电平
+ * @n 实验现象：连在扩展板某个引脚(例：eGPA7)的LED灯先亮1s再灭1s，以此循环
  *
  * @copyright   Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @licence     The MIT License (MIT)
@@ -29,7 +29,7 @@
 DFRobot_MCP23017 mcp(Wire, /*addr =*/0x27);//构造函数，地址可通过拨码开关更改A2A1A0的高低电平，实现硬件更改地址，范围0x20~0x27
 //DFRobot_MCP23017 mcp;//这样定义会使用默认参数， Wire  0x27(默认I2C地址)
 
-//准备：将LED灯连接到IO扩展板的某个数字引脚(例：eGPA0)
+//准备：将LED灯连接到IO扩展板的某个数字引脚(例：eGPA7)
 void setup(void)
 {
   Serial.begin(115200);
@@ -46,7 +46,7 @@ void setup(void)
    8       9      10     11     12     13     14     15
   参数mode 如下参数是可用的：可设置成输入(INPUT)、输出(OUTPUT)、上拉输入(INPUT_PULLUP)模式
   */
-  mcp.pinMode(/*pin = */mcp.eGPA0, /*mode = */OUTPUT);
+  mcp.pinMode(/*pin = */mcp.eGPA7, /*mode = */OUTPUT);
 }
 
 void loop(void)
@@ -59,9 +59,9 @@ void loop(void)
   eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
    8    9   10   11   12   13   14   15
   */
-  mcp.digitalWrite(/*pin = */mcp.eGPA0, /*level = */HIGH);
+  mcp.digitalWrite(/*pin = */mcp.eGPA7, /*level = */HIGH);
   delay(1000);
   Serial.println("Pin output low level!");
-  mcp.digitalWrite(/*pin = */mcp.eGPA0, /*level = */LOW);
+  mcp.digitalWrite(/*pin = */mcp.eGPA7, /*level = */LOW);
   delay(1000);
 }

@@ -1,18 +1,23 @@
 /*!
- * @file ioInterrupt.ino
- * @brief IO中断，将IO扩展板的某组端口（A组或B组）的某个引脚设置为中断模式,当对应组端口发生中断时，引脚INTA（对应A组端口）或INTB（对应B组端口）将输出一个高电平
- * INTA用来检测端口eGPA的引脚是否发生中断,INTB用来检测端口eGPB的引脚是否发生中断;将INTA和INTB引脚分别连接到主控的外部中断0和外部中断1
- * @n 实验现象：当主控检测到INTA或INTB引脚信号发生变化时，执行相应的中断服务函数，从而串口打印出是哪个引脚发生了中断
+ * @file stabilityTest.ino
+ * @brief 综合测试demo，测试扩展板的输入、输出、中断等功能。
+ * @n 将扩展板B组端口上的引脚eGPB1设置为输出模式，并接上LED灯,取名LEDB1
+ * @n 将扩展板A组端口上的引脚eGPA7设置为输出模式，并接上LED灯，取名LEDA7
+ * @n 将扩展板A组端口上的引脚eGPA0设置为输入模式，并接上Button，取名按钮A0
+ * @n 将扩展板A组端口上的引脚eGPA1设置为下降沿中断，并接上按钮，取名按钮A1，并将INTA中断信号引脚连接到主控的外部中断0（这里以UNO为例）
+ * @n 将扩展板B组端口上的引脚eGPB7设置为上升沿中断，并接上按钮，取名按钮B7，并将INTB中断信号引脚连接到主控的外部中断1（这里以UNO为例）
+ * @n 当检测到按钮A0被按下时，LEDB1亮，松开时，LEDB1灭
+ * @n 当检测到A组端口发生中断时，LEDA7亮
+ * @n 当检测到B组端口发生中断时，LEDA7灭
  *
  * @copyright   Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @licence     The MIT License (MIT)
  * @author [Arya](xue.peng@dfrobot.com)
  * @version  V1.0
- * @eGPAte  2019-07-18
+ * @date  2019-07-18
  * @get from https://www.dfrobot.com
  * @url https://github.com/DFRobot/DFRobot_MCP23017
  */
-
 #include <DFRobot_MCP23017.h>
 /*DFRobot_MCP23017构造函数
  *参数&wire 可填TwoWire对象Wire
@@ -27,35 +32,43 @@
     0  0  1  0  | 0  0  0  1    0x21
     0  0  1  0  | 0  0  0  0    0x20
  */
-DFRobot_MCP23017 mcp(Wire, /*addr =*/0x27);//构造函数，地址可通过拨码开关更改A2A1A0的高低电平，实现硬件更改地址，范围0x20~0x27
+DFRobot_MCP23017 mcp(Wire, 0x27);//构造函数，地址可通过拨码开关更改A2A1A0的高低电平，实现硬件更改地址，范围0x20~0x27
 //DFRobot_MCP23017 mcp;//这样定义会使用默认参数， Wire  0x27(默认I2C地址)
 
-//将2个按钮分别连接到IO扩展板端口eGPA的某个引脚(例：eGPA0)和端口eGPB的某个引脚(例：eGPB0)
-//将INTA连接到UNO的外部中断0引脚上，INTB连接到UNO的外部中断1引脚上
+/*中断服务函数，原型为 void func(int index),index：表示发生中断的引脚编号*/
+void gpioA1(int index){
+  /*pinDescription函数用来将某个引脚转换为字符串描述
+  参数pin 如下参数都是可用的
+  eGPA0  eGPA1  eGPA2  eGPA3  eGPA4  eGPA5  eGPA6  eGPA7
+    0      1      2      3      4      5      6      7
+  eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
+    8      9      10     11     12     13     14     15
+  */
+  String description = mcp.pinDescription(/*pin = */index);
+  Serial.print(description);
+  Serial.println(" Interruption occurs!");
+  Serial.println("LEDA7 turn on!");
+  mcp.digitalWrite(/*pin = */mcp.eGPB1, /*level = */HIGH);
+}
+void gpioB7(int index){
+  String description = mcp.pinDescription(/*pin = */index);
+  Serial.print(description);
+  Serial.println(" Interruption occurs!");
+  Serial.println("LEDA7 turn off!");
+  mcp.digitalWrite(/*pin = */mcp.eGPB1, /*level = */LOW);
+}
 
 bool intFlagA = false;//INTA中断标志
 bool intFlagB = false;//INTB中断标志
 
-/*中断服务函数，原型为 void func(int index),其中index代表那个引脚发生中断*/
-void gpa0CB(int index){
-  /*pinDescription函数用来将某个引脚转换为字符串描述
-  参数pin 如下参数都是可用的
-  eGPA0  eGPA1  eGPA2  eGPA3  eGPA4  eGPA5  eGPA6  eGPA7
-   0    1    2    3    4    5    6    7
-  eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
-   8    9   10   11   12   13   14   15
-  */
-  String description = mcp.pinDescription(index);
-  Serial.print(description);Serial.println(" Interruption occurs!");
-}
-
-void gpb7CB(int index){
-  String description = mcp.pinDescription(index);
-  Serial.print(description);Serial.println(" Interruption occurs!");
-}
-
 void setup() {
   Serial.begin(115200);
+  
+  /*在这里一致等到芯片初始化完成才能退出*/
+  while(mcp.begin() != 0){
+    Serial.println("Initialization of the chip failed, please confirm that the chip connection is correct!");
+    delay(1000);
+  }
   #ifdef ARDUINO_ARCH_MPYTHON 
   pinMode(P0, INPUT);//使用掌控外部中断,INTA连接到掌控P0引脚
   pinMode(P1, INPUT);//使用掌控外部中断,INTB连接到掌控P1引脚
@@ -63,12 +76,19 @@ void setup() {
   pinMode(2, INPUT);//使用UNO的外部中断0
   pinMode(3, INPUT);//使用UNO的外部中断1
   #endif
+  
+  /*pinMode函数用于这是模块引脚模式
+  参数pin 如下参数都是可用的：
+  eGPA0  eGPA1  eGPA2  eGPA3  eGPA4  eGPA5  eGPA6  eGPA7
+   0       1      2      3      4      5      6      7
+  eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
+   8       9      10     11     12     13     14     15
+  参数mode 如下参数是可用的：可设置成输入(INPUT)、输出(OUTPUT)、上拉输入(INPUT_PULLUP)模式
+  */
+  mcp.pinMode(/*pin = */mcp.eGPA7, /*mode = */OUTPUT);
+  mcp.pinMode(/*pin = */mcp.eGPB1, /*mode = */OUTPUT);
+  mcp.pinMode(/*pin = */mcp.eGPA0, /*mode = */INPUT);
 
-  /*在这里一致等到芯片初始化完成才能退出*/
-  while(mcp.begin() != 0){
-    Serial.println("Initialization of the chip failed, please confirm that the chip connection is correct!");
-    delay(1000);
-  }
   /*pinModeInterrupt函数用于将引脚设置中断模式，该函数会自动将引脚设置为输入模式
   参数pin 如下参数都是可用的：
   eGPA0  eGPA1  eGPA2  eGPA3  eGPA4  eGPA5  eGPA6  eGPA7
@@ -81,9 +101,8 @@ void setup() {
   参数cb 中断服务函数(带参函数)
   原型void func(int)
   */
-  mcp.pinModeInterrupt(/*pin = */mcp.eGPA0, /*mode = */mcp.eHighLevel, /*cb = */gpa0CB);//数字引脚0(eGPA0)，高电平中断，当引脚0的状态为高电平时产生中断，INTA输出高电平
-  mcp.pinModeInterrupt(/*pin = */mcp.eGPB7, /*mode = */mcp.eChangeLevel, /*cb = */gpb7CB);//数字引脚15(eGPB7)，双边沿跳变中断，当引脚15的状态改变时产生中断，INTB输出高电平
-
+  mcp.pinModeInterrupt(/*p = */mcp.eGPA1, /*mode = */mcp.eFalling, /*cb = */gpioA1);//数字引脚1(eGPA1)，下降沿中断，当引脚1的状态从高电平到低电平变化时产生中断，INTA输出高电平
+  mcp.pinModeInterrupt(/*p = */mcp.eGPB7, /*mode = */mcp.eRising, /*cb = */gpioB7);//数字引脚15(eGPB7)，上升沿中断，当引脚15的状态从低电平到高电平变化时产生中断，INTB输出高电平
   #ifdef ARDUINO_ARCH_MPYTHON  //Microbit这里需要做一些单独处理吗
   /* 掌控 中断引脚与终端号码对应关系表
    * -------------------------------------------------------------------------------------
@@ -93,7 +112,7 @@ void setup() {
    * |-----------------------------------------------------------------------------------|
    */
   attachInterrupt(digitalPinToInterrupt(P0)/*查询P0引脚的中断号*/,notifyA,RISING);//开启掌控P0引脚的外部中断，上升沿触发，INTA连接P0
-  attachInterrupt(digitalPinToInterrupt(P1)/*查询P1引脚的中断号*/,notifyB,RISING);//开启掌控P1引脚的外部中断，上升沿触发，INTA连接P1
+  attachInterrupt(digitalPinToInterrupt(P1)/*查询P1引脚的中断号*/,notifyB,RISING);//开启掌控P1引脚的外部中断，上升沿触发，INTB连接P1
   #else
   /* AVR系列Arduino 中断引脚与终端号码对应关系表
    * ---------------------------------------------------------------------------------------
@@ -121,6 +140,7 @@ void setup() {
   attachInterrupt(/*中断号*/1,notifyB,RISING);//开启外部中断1,INTB连接至主控的数字引脚上：UNO(3),Mega2560(3),Leonardo(2),microbit(P1)
   #endif
 }
+
 /*中断服务函数*/
 void notifyA(){
   intFlagA = true;
@@ -130,6 +150,27 @@ void notifyB(){
 }
 
 void loop() {
+  /*digitalRead函数用于读取某个数字引脚的高低电平,在使用该函数之前，必须先将引脚设置为输入模式
+  参数pin 如下参数都是可用的：
+  eGPA0  eGPA1  eGPA2  eGPA3  eGPA4  eGPA5  eGPA6  eGPA7
+   0       1      2      3      4      5      6      7
+  eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
+   8       9      10     11     12     13     14     15
+  */
+  uint8_t value = mcp.digitalRead(/*pin = */mcp.eGPA0);
+  if(value){
+      /*digitalWrite函数用于将引脚输出高电平(HIGH)或低电平(LOW),在使用该函数之前，必须先将引脚设置为输出模式
+      可以直接指定扩展板的引脚，参数pin如下参数都是可用的：
+      eGPA0  eGPA1  eGPA2  eGPA3  eGPA4  eGPA5  eGPA6  eGPA7
+       0      1       2      3      4      5      6      7
+      eGPB0  eGPB1  eGPB2  eGPB3  eGPB4  eGPB5  eGPB6  eGPB7
+        8      9     10     11      12     13    14     15
+      */
+      mcp.digitalWrite(/*pin = */mcp.eGPB1, /*level = */HIGH);
+      delay(200);
+  }else{
+      mcp.digitalWrite(/*pin = */mcp.eGPB1, /*level = */LOW);
+  }
   if(intFlagA){
     intFlagA = false;
     /*pollInterrupts函数用于轮询某组端口是否发生中断

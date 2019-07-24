@@ -73,6 +73,15 @@ String DFRobot_MCP23017::pinDescription(ePin_t pin)
   return "";
 }
 
+String DFRobot_MCP23017::pinDescription(int pin){
+  for(int i=0; i<sizeof(_pinDescriptions)/sizeof(_pinDescriptions[i]); i++){
+    if(pin == (int)_pinDescriptions[i].pin){
+      return _pinDescriptions[i].description;
+    }
+  }
+  return "";
+}
+
 int DFRobot_MCP23017::pinMode(ePin_t pin, uint8_t mode)
 {
   uint8_t _pin = (uint8_t)pin;
